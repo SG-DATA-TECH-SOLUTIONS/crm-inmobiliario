@@ -1,100 +1,175 @@
-<div align="center">
-    <a href="https://www.idurarapp.com/">
-  <img src="https://avatars.githubusercontent.com/u/50052356?s=200&v=4" width="128px" />
-    </a>
-    <h1>Open Source ERP / CRM Accounting Invoice Quote</h1>
-    <p align="center">
-        <p>IDURAR ERP CRM | Simple To Use</p>
-    </p>
+# Django-CRM
+
+============
+
+Django CRM is opensource CRM developed on django framework. It has all
+the basic features of CRM to start with. We welcome code contributions
+and feature requests via github.
+
+## Project Status and Future Direction
+
+### Background
+
+9 years ago, I launched this project with a mission to provide startups with a free, open-source, and customizable CRM solution, addressing the high subscription costs of commercial alternatives. Initially developed as a Django full-stack application, the project evolved significantly with the support of a dedicated team. However, maintaining the team and covering salaries depleted resources, and I was unable to renew the domain. Recognizing the need for a modernized user experience, I explored updating the frontend with React but ultimately faced financial and team constraints.
+
+### Moving Forward
+
+To align with the project’s vision and address these challenges, I’ve shifted development to a new repository using **SvelteKit** and **Prisma** for a robust, fast, and feature-rich framework. A Minimum Viable Product (MVP) was released last week at [MicroPyramid/opensource-startup-crm](https://github.com/MicroPyramid/opensource-startup-crm).
+
+#### Key Updates:
+
+-   **Current Repository:** No further updates will be made to this repository.
+    
+-   **New Repository:** Development will continue in the new SvelteKit-based repository.
+    
+-   **Mobile App:** Enhancements to the Flutter-based mobile app [MicroPyramid/flutter-crm](https://github.com/MicroPyramid/flutter-crm) will depend on increased user engagement or support from a paying client.
     
 
+### Future Vision
+
+This project is far from dead, it’s evolving. I’m committed to its growth and open to discussions about its direction, contributions, or potential collaborations. Feel free to reach out with ideas or feedback.
+
+Thank you for your support and understanding.
+
+## Runcode 
+
+ Runcode is online developer workspace. It is cloud based simple, secure and ready to code workspaces, assuring high performance & fully configurable coding environment. With runcode you can run django-crm(API) with one-click.
+
+
+- Open below link to create django-crm workspace on [RunCode](https://runcode.io/ "RunCode"). It will create django-crm API
+
+    [![RunCode](https://runcode-app-public.s3.amazonaws.com/images/dark_btn.png)](https://runcode.io)
+
+- After running API, Go to Frontend UI [React CRM](https://github.com/MicroPyramid/react-crm "React CRM") project to create new workspace with runcode.
+
+## Docs
+
+Please [Click Here](http://django-crm.readthedocs.io "Click Here") for latest documentation.
+
+## Project Modules
+This project contains the following modules:
+- Contacts
+- Companies
+- Leads
+- Accounts
+- Invoices (todo)
+- Cases (todo)
+- Opportunity (todo)
+
+## Try for free [here](https://bottlecrm.io/)
+
+## Installation Guide
+
+We recommend ubuntu 20.04. These instructions are verified for ubuntu 20.04.
+
+#### To install system requirements
+
 ```
- Give a Star ⭐️ & Fork to this project ... Happy coding! 🤩`
+sudo apt update && sudo apt upgrade -y
+
+sudo apt install python-is-python3 xvfb libfontconfig wkhtmltopdf python3-dev python3-pip build-essential libssl-dev libffi-dev python3-venv redis-server redis-tools virtualenv -y
 ```
 
-IDURAR is Open Source ERP / CRM (Invoice / Quote / Accounting ) Based on Advanced Mern Stack (Node.js / Express.js / MongoDb / React.js ) with Ant Design (AntD) and Redux
+#### Install dependencies
 
-</div>
+##### Optional (based on personal choice)
 
-**🚀 Self-hosted Entreprise Version** : [https://cloud.idurarapp.com](https://cloud.idurarapp.com/)
+```
+sudo apt update && sudo apt upgrade -y && sudo apt install zsh python3-virtualenv
 
+sh -c "$(wget -O- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
-## Features :
+pip install virtualenvwrapper
 
-Invoice Management
+echo "source /home/ubuntu/.local/bin/virtualenvwrapper.sh" >> ~/.zshrc
+```
 
-Payment Management
+If you want to install postgres, follow https://www.postgresql.org/download/
+#### To modify postgresql root password
 
-Quote Management
+```
+sudo -u postgres psql
+ALTER USER postgres WITH PASSWORD 'root';
+```
 
-Customer Management
+#### Create and activate a virtual environment.
+if you installed and configured virtualenv wrapper then use the following
+``` 
+mkvirtualenv <env_name>
+workon <env_name>
+```
+or else
+```
+virtualenv venv
+source venv/bin/activate
+```
+Install the project's dependency after activating env
 
-Ant Design Framework(AntD) 🐜
+```
+pip install -r requirements.txt
+```
 
-Based on Mern Stack (Node.js / Express.js / MongoDb / React.js ) 👨‍💻
+### Env variables
 
-### May i can use IDURAR for Commercial use :
-
-- Yes You can use IDURAR for free for personal or Commercial use.
-
-## Our Sponsors
-
-  <a href="https://m.do.co/c/4ead8370b905?ref=idurarapp.com">
-    <img src="https://opensource.nyc3.cdn.digitaloceanspaces.com/attribution/assets/PoweredByDO/DO_Powered_by_Badge_blue.svg" width="201px">
-  </a>
-
-#
-
-<img width="1403" alt="Open Source ERP CRM" src="https://github.com/idurar/idurar-erp-crm/assets/136928179/a6712286-7ca6-4822-8902-fb7523533ee8">
-
-## Free Open Source ERP / CRM App
-
-IDURAR is Open "Fair-Code" Source ERP / CRM (Invoice / Inventory / Accounting / HR) Based on Mern Stack (Node.js / Express.js / MongoDb / React.js ) with Ant Design (AntD) and Redux
-
-
-## Getting started
-
-1.[Clone the repository](INSTALLATION-INSTRUCTIONS.md#step-1-clone-the-repository)
-
-2.[Create Your MongoDB Account and Database Cluster](INSTALLATION-INSTRUCTIONS.md#Step-2-Create-Your-MongoDB-Account-and-Database-Cluster)
-
-3.[Edit the Environment File](INSTALLATION-INSTRUCTIONS.md#Step-3-Edit-the-Environment-File)
-
-4.[Update MongoDB URI](INSTALLATION-INSTRUCTIONS.md#Step-4-Update-MongoDB-URI)
-
-5.[Install Backend Dependencies](INSTALLATION-INSTRUCTIONS.md#Step-5-Install-Backend-Dependencies)
-
-6.[Run Setup Script](INSTALLATION-INSTRUCTIONS.md#Step-6-Run-Setup-Script)
-
-7.[Run the Backend Server](INSTALLATION-INSTRUCTIONS.md#Step-7-Run-the-Backend-Server)
-
-8.[Install Frontend Dependencies](INSTALLATION-INSTRUCTIONS.md#Step-8-Install-Frontend-Dependencies)
-
-9.[Run the Frontend Server](INSTALLATION-INSTRUCTIONS.md#Step-9-Run-the-Frontend-Server)
-
-## Contributing
-
-1.[How to contribute](https://github.com/idurar/idurar-erp-crm/blob/master/CONTRIBUTING.md#how-to-contribute)
-
-2.[Reporting issues](https://github.com/idurar/idurar-erp-crm/blob/master/CONTRIBUTING.md#reporting-issues)
-
-3.[Working on issues ](https://github.com/idurar/idurar-erp-crm/blob/master/CONTRIBUTING.md#working-on-issues)
-
-4.[Submitting pull requests](https://github.com/idurar/idurar-erp-crm/blob/master/CONTRIBUTING.md#submitting-pull-requests)
-
-5.[Commit Guidelines](https://github.com/idurar/idurar-erp-crm/blob/master/CONTRIBUTING.md#commit-guidelines)
-
-6.[Coding Guidelines](https://github.com/idurar/idurar-erp-crm/blob/master/CONTRIBUTING.md#coding-guidelines)
-
-7.[Questions](https://github.com/idurar/idurar-erp-crm/blob/master/CONTRIBUTING.md#questions)
+* Then refer to `env.md` for environment variables and keep those in the `.env` file in the current folder as your project is in.
 
 
-## Show your support
+### Docker / docker-compose
+in order to use docker, please run the next commands after cloning repo:
+```
+docker build -t djcrm:1 -f docker/dockerfile .
+docker-compose -f docker/docker-compose.yml up
+```
 
-Dont forget to give a ⭐️ to this project ... Happy coding!
+**Note**: you must have docker/docker-compose installed on your host. 
+### next steps
 
-**🚀 Self-hosted Entreprise Version** : [https://cloud.idurarapp.com](https://cloud.idurarapp.com)
 
-## License
+```
+python manage.py migrate
+python manage.py runserver
+```
+- Then open http://localhost:8000/swagger-ui/ in your browser to explore API.
 
-IDURAR is Free Open Source Released under the GNU Affero General Public License v3.0.
+- After running API, Go to Frontend UI [React CRM](https://github.com/MicroPyramid/react-crm "React CRM") project to configure Fronted UI to interact with API.
+
+
+## Start celery worker in another terminal window
+
+celery -A crm worker --loglevel=INFO
+
+### Useful tools and packages
+
+```
+pipdeptree # to see pip dependency tree
+black # to format code to meet python coding standards
+pip-check -H  # to see upgradable packages
+isort # to sort imports in python
+```
+
+### Community
+
+**Note: This repository is no longer actively maintained.** For the latest development and community support, please visit our new SvelteKit-based CRM project:
+
+-   **New Project**: [MicroPyramid/opensource-startup-crm](https://github.com/MicroPyramid/opensource-startup-crm)
+-   Follow [@micropyramid](<https://twitter.com/micropyramid>) on Twitter
+-   For questions about the legacy Django CRM, check [past issues](<https://github.com/MicroPyramid/Django-CRM/issues>)
+-   For new feature requests and active development, visit the [new repository](https://github.com/MicroPyramid/opensource-startup-crm)
+-   For commercial support [Contact us](https://micropyramid.com/contact-us/)
+
+## Credits
+
+### Contributors
+
+This project exists thanks to all the people who contributed during its active development!
+
+![image](https://opencollective.com/django-crm/contributors.svg?width=890&button=false)
+
+### Legacy Project Notice
+
+This Django CRM repository is now in maintenance mode. While we welcome your feedback and appreciate past contributions, active development has moved to our new SvelteKit-based CRM solution at [MicroPyramid/opensource-startup-crm](https://github.com/MicroPyramid/opensource-startup-crm).
+
+For commercial support [Contact us](https://micropyramid.com/contact-us/)
+
+# Trigger deploy
+
