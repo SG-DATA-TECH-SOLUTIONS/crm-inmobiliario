@@ -1,3 +1,5 @@
 [submodule "frontend"]
 	path = frontend
 	url = ./frontend
+[submodule ".\\frontend\\"]
+	url = https://github.com/artalcb/SG_CRM_FRONT
