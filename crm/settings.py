@@ -94,7 +94,7 @@ MIDDLEWARE = [
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
-ROOT_URLCONF = "crm.urls"
+ROOT_URLCONF = "crm.urls" #file
 
 TEMPLATES = [
     {
@@ -313,10 +313,10 @@ DOMAIN_NAME = os.getenv("DOMAIN_NAME")
 
 
 SIMPLE_JWT = {
-    #'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
+    #"ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
-    "ROTATE_REFRESH_TOKENS": False,
+    "ROTATE_REFRESH_TOKENS": True, #ahora sera rotado
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
     "ALGORITHM": "HS256",
