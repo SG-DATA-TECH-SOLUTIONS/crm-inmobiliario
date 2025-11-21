@@ -1,6 +1,9 @@
 import pytz
+import hmac
+import hashlib
+import time
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
-
 
 def jwt_payload_handler(user):
     """Custom payload handler
@@ -622,3 +625,26 @@ def append_str_to(append_to: str, *args, sep=", ", **kwargs):
             data = True
             break
     return f"{sep}".join(filter(len, result_list)) if data else ""
+
+def generate_signed_url(file_id, expires_in=300):
+    """Generate signed URL that expires in 5 minutes"""
+    expiry = int(time.time()) + expires_in
+    message = f"{file_id}:{expiry}"
+    signature = hmac.new(
+        settings.SECRET_KEY.encode(),
+        message.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    return f"/api/secure-file/{file_id}/?expires={expiry}&signature={signature}"
+
+def verify_signature(file_id, expiry, signature):
+    """Verify the signature is valid and not expired"""
+    if int(time.time()) > int(expiry):
+        return False
+    message = f"{file_id}:{expiry}"
+    expected = hmac.new(
+        settings.SECRET_KEY.encode(),
+        message.encode(),
+        hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(signature, expected)

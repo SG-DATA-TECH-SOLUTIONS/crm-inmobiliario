@@ -202,16 +202,17 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class AttachmentsSerializer(serializers.ModelSerializer):
-    file_path = serializers.SerializerMethodField()
-
-    def get_file_path(self, obj):
-        if obj.attachment:
-            return obj.attachment.url
-        None
-
+    secure_url = serializers.SerializerMethodField()
+    
+    def get_secure_url(self, obj):
+        from common.utils import generate_signed_url
+        return generate_signed_url(str(obj.id))
+    
     class Meta:
+        from common.models import Attachments
         model = Attachments
-        fields = ["id", "created_by", "file_name", "created_at", "file_path"]
+        fields = ['id', 'file_name', 'secure_url', 'created_at']
+
 
 
 class DocumentSerializer(serializers.ModelSerializer):

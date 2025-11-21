@@ -5,6 +5,7 @@ ENV_TYPE="dev"
 DOMAIN_NAME=""
 
 # AWS
+
 AWS_BUCKET_NAME=""
 
 AWS_ACCESS_KEY_ID=""
@@ -12,8 +13,8 @@ AWS_SECRET_ACCESS_KEY=""
 AWS_SES_REGION_NAME=""
 AWS_SES_REGION_ENDPOINT=""
 
-
 # DB
+
 DBNAME="bottlecrm"
 DBUSER="postgres"
 DBPASSWORD="root"
@@ -21,18 +22,22 @@ DBHOST="localhost"
 DBPORT="5432"
 
 # Sentry
+
 SENTRY_DSN=""
 
 # Celery
-CELERY_BROKER_URL=""
-CELERY_RESULT_BACKEND=""
+
+CELERY_BROKER_URL="redis://localhost:6379/0"
+CELERY_RESULT_BACKEND="redis://localhost:6379/0"
 
 # Swagger
+
 SWAGGER_ROOT_URL=""
 
 #CACHES
 MEMCACHELOCATION=""
 
 # Email
+
 DEFAULT_FROM_EMAIL=""
 ADMIN_EMAIL=""

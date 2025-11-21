@@ -25,4 +25,6 @@ urlpatterns = [
     path("api-settings/", views.DomainList.as_view()),
     path("api-settings/<str:pk>/", views.DomainDetailView.as_view()),
     path("user/<str:pk>/status/", views.UserStatusView.as_view()),
+    path('secure-file/<uuid:file_id>/', views.SecureFileView.as_view()),
+
 ]

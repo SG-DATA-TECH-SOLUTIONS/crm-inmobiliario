@@ -13,6 +13,7 @@ from django.contrib.auth import authenticate, login
 from django.contrib.auth.hashers import make_password
 from django.db import transaction
 from django.db.models import Q
+from django.http import FileResponse
 from django.http.response import JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.utils import timezone
@@ -909,3 +910,25 @@ class GoogleLoginView(APIView):
         response['refresh_token'] = str(token)
         response['user_id'] = user.id
         return Response(response)
+
+
+class SecureFileView(APIView):
+        
+    permission_classes = []
+    
+    def get(self, request, file_id):
+        from common.utils import verify_signature
+        from common.models import Attachments
+        
+        expiry = request.GET.get('expires')
+        signature = request.GET.get('signature')
+        
+        if not verify_signature(file_id, expiry, signature):
+            return Response({'error': 'Invalid or expired link'}, status=403)
+        
+        try:
+            attachment = Attachments.objects.get(id=file_id)
+            return FileResponse(attachment.attachment.open('rb'))
+        except Attachments.DoesNotExist:
+            return Response({'error': 'File not found'}, status=404)
+
