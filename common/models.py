@@ -398,6 +398,14 @@ class Attachments(BaseModel):
         related_name="tasks_attachment",
         on_delete=models.CASCADE,
     )
+    
+    opportunity_task = models.ForeignKey(
+        "opportunity.OpportunityTask",
+        blank=True,
+        null=True,
+        related_name="task_attachments",
+        on_delete=models.CASCADE,
+    )
 
     invoice = models.ForeignKey(
         "invoices.Invoice",

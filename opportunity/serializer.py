@@ -131,3 +131,24 @@ class OpportunityDetailEditSwaggerSerializer(serializers.Serializer):
 
 class OpportunityCommentEditSwaggerSerializer(serializers.Serializer):
     comment = serializers.CharField()
+
+
+
+class OpportunityTaskSerializer(serializers.ModelSerializer):
+    attachments = serializers.SerializerMethodField()
+    
+    def get_attachments(self, obj):
+        from common.serializer import AttachmentsSerializer
+        return AttachmentsSerializer(obj.task_attachments.all(), many=True).data
+    
+    class Meta:
+        from opportunity.models import OpportunityTask
+        model = OpportunityTask
+        fields = ['id', 'stage', 'name', 'completed', 'deadline', 'notes', 'order', 'attachments', 'created_at']
+
+
+class OpportunityTaskCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        from opportunity.models import OpportunityTask
+        model = OpportunityTask
+        fields = ['stage', 'name', 'completed', 'deadline', 'notes', 'order']

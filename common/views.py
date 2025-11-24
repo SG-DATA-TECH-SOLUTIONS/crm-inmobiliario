@@ -928,7 +928,10 @@ class SecureFileView(APIView):
         
         try:
             attachment = Attachments.objects.get(id=file_id)
-            return FileResponse(attachment.attachment.open('rb'))
+            response = FileResponse(attachment.attachment.open('rb'))
+            # Force download instead of opening in browser
+            response['Content-Disposition'] = f'attachment; filename="{attachment.file_name}"'
+            return response
         except Attachments.DoesNotExist:
             return Response({'error': 'File not found'}, status=404)
 

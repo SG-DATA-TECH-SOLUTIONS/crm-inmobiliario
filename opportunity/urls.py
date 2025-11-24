@@ -9,4 +9,8 @@ urlpatterns = [
     path("<str:pk>/", views.OpportunityDetailView.as_view()),
     path("comment/<str:pk>/", views.OpportunityCommentView.as_view()),
     path("attachment/<str:pk>/", views.OpportunityAttachmentView.as_view()),
+    path("<str:opportunity_id>/tasks/", views.OpportunityTaskListView.as_view()),
+    path("tasks/<str:task_id>/", views.OpportunityTaskDetailView.as_view()),
+    path("tasks/<str:task_id>/attachments/", views.OpportunityTaskAttachmentView.as_view()),
+    path("attachments/<str:attachment_id>/", views.OpportunityTaskAttachmentDeleteView.as_view()),
 ]

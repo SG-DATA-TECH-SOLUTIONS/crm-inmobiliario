@@ -160,6 +160,44 @@ class OpportunityListView(APIView, LimitOffsetPagination):
                 attachment.attachment = self.request.FILES.get("opportunity_attachment")
                 attachment.save()
 
+            # Create default tasks for all stages
+            from opportunity.models import OpportunityTask
+            from datetime import timedelta
+            from django.utils import timezone
+            
+            # All default tasks with their deadline configurations
+            # Discovery gets deadlines immediately, others get them when previous stage completes
+            default_tasks = [
+                # Discovery stage - deadlines added immediately
+                {'stage': 'DISCOVERY', 'name': 'Initial contact and needs assessment', 'order': 1, 'deadline_days': 3},
+                {'stage': 'DISCOVERY', 'name': 'Identify key stakeholders', 'order': 2, 'deadline_days': 5},
+                {'stage': 'DISCOVERY', 'name': 'Document requirements', 'order': 3, 'deadline_days': 7},
+                # Proposal stage - deadlines added when Discovery completes
+                {'stage': 'PROPOSAL', 'name': 'Prepare proposal draft', 'order': 1, 'deadline_days': 3},
+                {'stage': 'PROPOSAL', 'name': 'Review with team', 'order': 2, 'deadline_days': 5},
+                {'stage': 'PROPOSAL', 'name': 'Submit proposal to client', 'order': 3, 'deadline_days': 7},
+                # Negotiation stage - deadlines added when Proposal completes
+                {'stage': 'NEGOTIATION', 'name': 'Address client feedback', 'order': 1, 'deadline_days': 3},
+                {'stage': 'NEGOTIATION', 'name': 'Finalize terms and pricing', 'order': 2, 'deadline_days': 5},
+                {'stage': 'NEGOTIATION', 'name': 'Prepare contract', 'order': 3, 'deadline_days': 7},
+            ]
+            
+            now = timezone.now()
+            for task_data in default_tasks:
+                # Only Discovery stage gets deadlines on creation
+                deadline = None
+                if task_data['stage'] == 'DISCOVERY':
+                    deadline = now.date() + timedelta(days=task_data['deadline_days'])
+                
+                OpportunityTask.objects.create(
+                    opportunity=opportunity_obj,
+                    stage=task_data['stage'],
+                    name=task_data['name'],
+                    order=task_data['order'],
+                    deadline=deadline,
+                    org=request.profile.org
+                )
+
             recipients = list(
                 opportunity_obj.assigned_to.all().values_list("id", flat=True)
             )
@@ -538,3 +576,227 @@ class OpportunityAttachmentView(APIView):
             },
             status=status.HTTP_403_FORBIDDEN,
         )
+
+
+
+class OpportunityTaskListView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get(self, request, opportunity_id):
+        """Get all tasks for an opportunity"""
+        from opportunity.models import OpportunityTask
+        from opportunity.serializer import OpportunityTaskSerializer
+        
+        tasks = OpportunityTask.objects.filter(
+            opportunity_id=opportunity_id,
+            org=request.profile.org
+        ).order_by('stage', 'order', '-created_at')
+        
+        serializer = OpportunityTaskSerializer(tasks, many=True)
+        return Response({
+            'error': False,
+            'tasks': serializer.data
+        }, status=status.HTTP_200_OK)
+
+    def post(self, request, opportunity_id):
+        """Create a new task"""
+        from opportunity.models import OpportunityTask
+        from opportunity.serializer import OpportunityTaskCreateSerializer
+        
+        opportunity = Opportunity.objects.filter(
+            id=opportunity_id,
+            org=request.profile.org
+        ).first()
+        
+        if not opportunity:
+            return Response({
+                'error': True,
+                'message': 'Opportunity not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = OpportunityTaskCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            task = serializer.save(
+                opportunity=opportunity,
+                org=request.profile.org
+            )
+            return Response({
+                'error': False,
+                'message': 'Task created successfully',
+                'task': OpportunityTaskSerializer(task).data
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'error': True,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+class OpportunityTaskDetailView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def get_object(self, task_id, org):
+        from opportunity.models import OpportunityTask
+        return OpportunityTask.objects.filter(id=task_id, org=org).first()
+
+    def put(self, request, task_id):
+        """Update a task"""
+        from opportunity.serializer import OpportunityTaskSerializer
+        from opportunity.models import OpportunityTask
+        from django.utils import timezone
+        from datetime import timedelta
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        task = self.get_object(task_id, request.profile.org)
+        if not task:
+            return Response({
+                'error': True,
+                'message': 'Task not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = OpportunityTaskCreateSerializer(task, data=request.data, partial=True)
+        if serializer.is_valid():
+            updated_task = serializer.save()
+            opportunity = updated_task.opportunity
+            
+            # Check if all tasks in current stage are completed
+            stage_tasks = OpportunityTask.objects.filter(
+                opportunity=opportunity,
+                stage=updated_task.stage
+            )
+            all_completed = all(t.completed for t in stage_tasks)
+            
+            logger.info(f"Task {task_id} updated. Stage: {updated_task.stage}, All completed: {all_completed}")
+            
+            # Stage deadline configuration (matches default_tasks structure)
+            stage_deadline_config = {
+                'PROPOSAL': [3, 5, 7],
+                'NEGOTIATION': [3, 5, 7],
+            }
+            
+            deadlines_updated = False
+            if all_completed:
+                now = timezone.now()
+                
+                # Map stage completion to next stage and completion field
+                stage_progression = {
+                    'DISCOVERY': ('PROPOSAL', 'discovery_completed_at'),
+                    'PROPOSAL': ('NEGOTIATION', 'proposal_completed_at'),
+                }
+                
+                if updated_task.stage in stage_progression:
+                    next_stage, completion_field = stage_progression[updated_task.stage]
+                    
+                    # Check if stage hasn't been completed before
+                    if not getattr(opportunity, completion_field):
+                        logger.info(f"{updated_task.stage} stage completed for opportunity {opportunity.id}. Adding deadlines to {next_stage} tasks...")
+                        
+                        # Mark stage as completed
+                        setattr(opportunity, completion_field, now)
+                        opportunity.save()
+                        
+                        # Add deadlines to next stage tasks
+                        next_stage_tasks = OpportunityTask.objects.filter(
+                            opportunity=opportunity,
+                            stage=next_stage
+                        ).order_by('order')
+                        
+                        deadline_days = stage_deadline_config.get(next_stage, [])
+                        for idx, task_obj in enumerate(next_stage_tasks):
+                            if idx < len(deadline_days):
+                                task_obj.deadline = now.date() + timedelta(days=deadline_days[idx])
+                                task_obj.save()
+                                logger.info(f"Updated {next_stage} task deadline: {task_obj.name} -> {task_obj.deadline}")
+                        
+                        deadlines_updated = True
+            
+            return Response({
+                'error': False,
+                'message': 'Task updated successfully',
+                'task': OpportunityTaskSerializer(task).data,
+                'stage_advanced': all_completed,
+                'deadlines_updated': deadlines_updated
+            }, status=status.HTTP_200_OK)
+        
+        return Response({
+            'error': True,
+            'errors': serializer.errors
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, task_id):
+        """Delete a task"""
+        task = self.get_object(task_id, request.profile.org)
+        if not task:
+            return Response({
+                'error': True,
+                'message': 'Task not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        task.delete()
+        return Response({
+            'error': False,
+            'message': 'Task deleted successfully'
+        }, status=status.HTTP_200_OK)
+
+
+class OpportunityTaskAttachmentView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request, task_id):
+        """Upload attachment to a task"""
+        from opportunity.models import OpportunityTask
+        
+        task = OpportunityTask.objects.filter(
+            id=task_id,
+            org=request.profile.org
+        ).first()
+        
+        if not task:
+            return Response({
+                'error': True,
+                'message': 'Task not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        if request.FILES.get('attachment'):
+            attachment = Attachments()
+            attachment.created_by = request.profile.user
+            attachment.file_name = request.FILES.get('attachment').name
+            attachment.opportunity_task = task
+            attachment.attachment = request.FILES.get('attachment')
+            attachment.save()
+            
+            return Response({
+                'error': False,
+                'message': 'Attachment uploaded successfully'
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response({
+            'error': True,
+            'message': 'No file provided'
+        }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class OpportunityTaskAttachmentDeleteView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def delete(self, request, attachment_id):
+        """Delete an attachment"""
+        attachment = Attachments.objects.filter(
+            id=attachment_id,
+            opportunity_task__org=request.profile.org
+        ).first()
+        
+        if not attachment:
+            return Response({
+                'error': True,
+                'message': 'Attachment not found'
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        attachment.delete()
+        return Response({
+            'error': False,
+            'message': 'Attachment deleted successfully'
+        }, status=status.HTTP_200_OK)

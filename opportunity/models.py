@@ -57,6 +57,8 @@ class Opportunity(BaseModel):
         blank=True,
         related_name="oppurtunity_org",
     )
+    discovery_completed_at = models.DateTimeField(null=True, blank=True)
+    proposal_completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         verbose_name = "Opportunity"
@@ -89,3 +91,39 @@ class Opportunity(BaseModel):
         assigned_user_ids = list(self.assigned_to.values_list("id", flat=True))
         user_ids = set(assigned_user_ids) - set(team_user_ids)
         return Profile.objects.filter(id__in=list(user_ids))
+
+
+class OpportunityTask(BaseModel):
+    STAGE_CHOICES = [
+        ('DISCOVERY', 'Discovery'),
+        ('PROPOSAL', 'Proposal'),
+        ('NEGOTIATION', 'Negotiation'),
+    ]
+    
+    opportunity = models.ForeignKey(
+        Opportunity,
+        related_name="tasks",
+        on_delete=models.CASCADE
+    )
+    stage = models.CharField(max_length=20, choices=STAGE_CHOICES)
+    name = models.CharField(max_length=255)
+    completed = models.BooleanField(default=False)
+    deadline = models.DateField(null=True, blank=True)
+    notes = models.TextField(null=True, blank=True)
+    order = models.IntegerField(default=0)
+    org = models.ForeignKey(
+        Org,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="opportunity_tasks",
+    )
+
+    class Meta:
+        verbose_name = "Opportunity Task"
+        verbose_name_plural = "Opportunity Tasks"
+        db_table = "opportunity_task"
+        ordering = ("stage", "order", "-created_at")
+
+    def __str__(self):
+        return f"{self.opportunity.name} - {self.name}"
