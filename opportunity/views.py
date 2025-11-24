@@ -112,9 +112,14 @@ class OpportunityListView(APIView, LimitOffsetPagination):
         params = request.data
         serializer = OpportunityCreateSerializer(data=params, request_obj=request)
         if serializer.is_valid():
+            # Convert empty string to None for due_date
+            due_date = params.get("due_date")
+            if due_date == "" or due_date is None:
+                due_date = None
+            
             opportunity_obj = serializer.save(
                 created_by=request.profile.user,
-                closed_on=params.get("due_date"),
+                closed_on=due_date,
                 org=request.profile.org,
             )
 
@@ -161,42 +166,47 @@ class OpportunityListView(APIView, LimitOffsetPagination):
                 attachment.save()
 
             # Create default tasks for all stages
-            from opportunity.models import OpportunityTask
-            from datetime import timedelta
-            from django.utils import timezone
-            
-            # All default tasks with their deadline configurations
-            # Discovery gets deadlines immediately, others get them when previous stage completes
-            default_tasks = [
-                # Discovery stage - deadlines added immediately
-                {'stage': 'DISCOVERY', 'name': 'Initial contact and needs assessment', 'order': 1, 'deadline_days': 3},
-                {'stage': 'DISCOVERY', 'name': 'Identify key stakeholders', 'order': 2, 'deadline_days': 5},
-                {'stage': 'DISCOVERY', 'name': 'Document requirements', 'order': 3, 'deadline_days': 7},
-                # Proposal stage - deadlines added when Discovery completes
-                {'stage': 'PROPOSAL', 'name': 'Prepare proposal draft', 'order': 1, 'deadline_days': 3},
-                {'stage': 'PROPOSAL', 'name': 'Review with team', 'order': 2, 'deadline_days': 5},
-                {'stage': 'PROPOSAL', 'name': 'Submit proposal to client', 'order': 3, 'deadline_days': 7},
-                # Negotiation stage - deadlines added when Proposal completes
-                {'stage': 'NEGOTIATION', 'name': 'Address client feedback', 'order': 1, 'deadline_days': 3},
-                {'stage': 'NEGOTIATION', 'name': 'Finalize terms and pricing', 'order': 2, 'deadline_days': 5},
-                {'stage': 'NEGOTIATION', 'name': 'Prepare contract', 'order': 3, 'deadline_days': 7},
-            ]
-            
-            now = timezone.now()
-            for task_data in default_tasks:
-                # Only Discovery stage gets deadlines on creation
-                deadline = None
-                if task_data['stage'] == 'DISCOVERY':
-                    deadline = now.date() + timedelta(days=task_data['deadline_days'])
+            try:
+                from opportunity.models import OpportunityTask
+                from datetime import timedelta
+                from django.utils import timezone
                 
-                OpportunityTask.objects.create(
-                    opportunity=opportunity_obj,
-                    stage=task_data['stage'],
-                    name=task_data['name'],
-                    order=task_data['order'],
-                    deadline=deadline,
-                    org=request.profile.org
-                )
+                # All default tasks with their deadline configurations
+                # Discovery gets deadlines immediately, others get them when previous stage completes
+                default_tasks = [
+                    # Discovery stage - deadlines added immediately
+                    {'stage': 'DISCOVERY', 'name': 'Initial contact and needs assessment', 'order': 1, 'deadline_days': 3},
+                    {'stage': 'DISCOVERY', 'name': 'Identify key stakeholders', 'order': 2, 'deadline_days': 5},
+                    {'stage': 'DISCOVERY', 'name': 'Document requirements', 'order': 3, 'deadline_days': 7},
+                    # Proposal stage - deadlines added when Discovery completes
+                    {'stage': 'PROPOSAL', 'name': 'Prepare proposal draft', 'order': 1, 'deadline_days': 3},
+                    {'stage': 'PROPOSAL', 'name': 'Review with team', 'order': 2, 'deadline_days': 5},
+                    {'stage': 'PROPOSAL', 'name': 'Submit proposal to client', 'order': 3, 'deadline_days': 7},
+                    # Negotiation stage - deadlines added when Proposal completes
+                    {'stage': 'NEGOTIATION', 'name': 'Address client feedback', 'order': 1, 'deadline_days': 3},
+                    {'stage': 'NEGOTIATION', 'name': 'Finalize terms and pricing', 'order': 2, 'deadline_days': 5},
+                    {'stage': 'NEGOTIATION', 'name': 'Prepare contract', 'order': 3, 'deadline_days': 7},
+                ]
+                
+                now = timezone.now()
+                for task_data in default_tasks:
+                    # Only Discovery stage gets deadlines on creation
+                    deadline = None
+                    if task_data['stage'] == 'DISCOVERY':
+                        deadline = now.date() + timedelta(days=task_data['deadline_days'])
+                    
+                    OpportunityTask.objects.create(
+                        opportunity=opportunity_obj,
+                        stage=task_data['stage'],
+                        name=task_data['name'],
+                        order=task_data['order'],
+                        deadline=deadline,
+                        org=request.profile.org
+                    )
+            except Exception as e:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.error(f"Failed to create default tasks: {str(e)}", exc_info=True)
 
             recipients = list(
                 opportunity_obj.assigned_to.all().values_list("id", flat=True)
