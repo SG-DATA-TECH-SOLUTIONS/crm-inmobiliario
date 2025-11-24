@@ -30,7 +30,7 @@ class ContactsListView(APIView, LimitOffsetPagination):
     #authentication_classes = (CustomDualAuthentication,)
     permission_classes = (IsAuthenticated,)
     model = Contact
-
+    
     def get_context_data(self, **kwargs):
         params = self.request.query_params
         queryset = self.model.objects.filter(org=self.request.profile.org).order_by("-id")
@@ -39,7 +39,13 @@ class ContactsListView(APIView, LimitOffsetPagination):
                 Q(assigned_to__in=[self.request.profile])
                 | Q(created_by=self.request.profile.user)
             ).distinct()
+        #JAIME CAMBIO CONTEXTO GET CONTACTO (ESTE SI FUNCIONA EL DE ARRIBA DE MOMENTO NO)
+        #queryset = self.model.objects.all().order_by("-id")
+        #if self.request.profile.role != "ADMIN" and not self.request.profile.is_admin:
+        #    #solo filtrar por los que haya creado el usuario
+        #    queryset = queryset.filter(created_by=self.request.profile.user)
 
+        
         if params:
             if params.get("name"):
                 queryset = queryset.filter(first_name__icontains=params.get("name"))

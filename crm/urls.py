@@ -31,6 +31,8 @@ urlpatterns = [
         name="healthz",
     ),
     path("api/", include("common.app_urls", namespace="common_urls")),
+    #contactos
+    path("api/contacts/", include("contacts.urls", namespace="api_contacts")),
     path(
         "logout/", views.LogoutView.as_view(), {"next_page": "/login/"}, name="logout"
     ),

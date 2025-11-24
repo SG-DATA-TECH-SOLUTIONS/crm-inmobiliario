@@ -64,7 +64,11 @@ from opportunity.models import Opportunity
 from opportunity.serializer import OpportunitySerializer
 from teams.models import Teams
 from teams.serializer import TeamsSerializer
-
+#JAIME- new imports para el jwt
+from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView
+#from .serializer import CustomTokenObtainPairSerializer
+#puede ser que sea .serializers y no .serializer (we'll see)
 
 class GetTeamsAndUsersView(APIView):
 

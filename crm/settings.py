@@ -259,7 +259,7 @@ REST_FRAMEWORK = {
     "EXCEPTION_HANDLER": "rest_framework.views.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "common.external_auth.CustomDualAuthentication"
+        # "common.external_auth.CustomDualAuthentication"
         # "rest_framework.authentication.SessionAuthentication",
         # "rest_framework.authentication.BasicAuthentication",
     ),
@@ -296,7 +296,7 @@ SWAGGER_SETTINGS = {
 }
 
 CORS_ALLOW_HEADERS = default_headers + ("org",)
-CORS_ORIGIN_ALLOW_ALL = True
+CORS_ORIGIN_ALLOW_ALL = True #JAIME - esto en produccion quitar
 CSRF_TRUSTED_ORIGINS = ["https://*.runcode.io", "http://*"]
 
 SECURE_HSTS_SECONDS = 3600
@@ -314,8 +314,7 @@ DOMAIN_NAME = os.getenv("DOMAIN_NAME")
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=1),
-    #"ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=365),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": True, #ahora sera rotado
     "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": False,
