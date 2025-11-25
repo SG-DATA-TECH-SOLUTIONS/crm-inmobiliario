@@ -17,6 +17,10 @@ from rest_framework import permissions
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 
 app_name = "crm"
 
@@ -27,12 +31,18 @@ urlpatterns = [
         name="healthz",
     ),
     path("api/", include("common.app_urls", namespace="common_urls")),
+    #contactos
+    path("api/contacts/", include("contacts.urls", namespace="api_contacts")),
     path(
         "logout/", views.LogoutView.as_view(), {"next_page": "/login/"}, name="logout"
     ),
     path("admin/", include(wagtailadmin_urls)),
-    
-    path("django/admin/", admin.site.urls),
+
+    #endpoints de auth para jwt
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    path("django/admin/", admin.site.urls), #pr admin 
     path("documents/", include(wagtaildocs_urls)),
     path("schema/", SpectacularAPIView.as_view(), name="schema"),
     # Optional UI:
