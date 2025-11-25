@@ -25,7 +25,32 @@ from opportunity import swagger_params1
 from opportunity.models import Opportunity
 from opportunity.serializer import *
 from opportunity.tasks import send_email_to_assigned_user
+from opportunity.constants import OpportunityStages
 from teams.models import Teams
+
+
+# ============================================================================
+# OPPORTUNITY TASK CONFIGURATION
+# Edit this to customize default tasks and deadlines for each stage
+# ============================================================================
+DEFAULT_OPPORTUNITY_TASKS = {
+    OpportunityStages.STAGE_1: [
+        {'name': 'Initial contact and needs assessment'},
+        {'name': 'Identify key stakeholders', 'deadline_days': 5},
+        {'name': 'Document requirements', 'deadline_days': 7},
+    ],
+    OpportunityStages.STAGE_2: [
+        {'name': 'Prepare proposal draft'},
+        {'name': 'Review with team', 'deadline_days': 5},
+        {'name': 'Submit proposal to client', 'deadline_days': 7},
+    ],
+    OpportunityStages.STAGE_3: [
+        {'name': 'Address client feedback', 'deadline_days': 3},
+        {'name': 'Finalize terms and pricing', 'deadline_days': 5},
+        {'name': 'Prepare contract', 'deadline_days': 7},
+    ],
+}
+# ============================================================================
 
 
 class OpportunityListView(APIView, LimitOffsetPagination):
@@ -171,38 +196,24 @@ class OpportunityListView(APIView, LimitOffsetPagination):
                 from datetime import timedelta
                 from django.utils import timezone
                 
-                # All default tasks with their deadline configurations
-                # Discovery gets deadlines immediately, others get them when previous stage completes
-                default_tasks = [
-                    # Discovery stage - deadlines added immediately
-                    {'stage': 'DISCOVERY', 'name': 'Initial contact and needs assessment', 'order': 1, 'deadline_days': 3},
-                    {'stage': 'DISCOVERY', 'name': 'Identify key stakeholders', 'order': 2, 'deadline_days': 5},
-                    {'stage': 'DISCOVERY', 'name': 'Document requirements', 'order': 3, 'deadline_days': 7},
-                    # Proposal stage - deadlines added when Discovery completes
-                    {'stage': 'PROPOSAL', 'name': 'Prepare proposal draft', 'order': 1, 'deadline_days': 3},
-                    {'stage': 'PROPOSAL', 'name': 'Review with team', 'order': 2, 'deadline_days': 5},
-                    {'stage': 'PROPOSAL', 'name': 'Submit proposal to client', 'order': 3, 'deadline_days': 7},
-                    # Negotiation stage - deadlines added when Proposal completes
-                    {'stage': 'NEGOTIATION', 'name': 'Address client feedback', 'order': 1, 'deadline_days': 3},
-                    {'stage': 'NEGOTIATION', 'name': 'Finalize terms and pricing', 'order': 2, 'deadline_days': 5},
-                    {'stage': 'NEGOTIATION', 'name': 'Prepare contract', 'order': 3, 'deadline_days': 7},
-                ]
-                
                 now = timezone.now()
-                for task_data in default_tasks:
-                    # Only Discovery stage gets deadlines on creation
-                    deadline = None
-                    if task_data['stage'] == 'DISCOVERY':
-                        deadline = now.date() + timedelta(days=task_data['deadline_days'])
-                    
-                    OpportunityTask.objects.create(
-                        opportunity=opportunity_obj,
-                        stage=task_data['stage'],
-                        name=task_data['name'],
-                        order=task_data['order'],
-                        deadline=deadline,
-                        org=request.profile.org
-                    )
+                
+                # Create tasks from configuration
+                for stage, tasks in DEFAULT_OPPORTUNITY_TASKS.items():
+                    for order, task_config in enumerate(tasks, start=1):
+                        # Only first stage gets deadlines on creation
+                        deadline = None
+                        if stage == OpportunityStages.STAGE_1 and task_config.get('deadline_days'):
+                            deadline = now.date() + timedelta(days=task_config['deadline_days'])
+                        
+                        OpportunityTask.objects.create(
+                            opportunity=opportunity_obj,
+                            stage=stage,
+                            name=task_config['name'],
+                            order=order,
+                            deadline=deadline,
+                            org=request.profile.org
+                        )
             except Exception as e:
                 import logging
                 logger = logging.getLogger(__name__)
@@ -680,24 +691,15 @@ class OpportunityTaskDetailView(APIView):
             
             logger.info(f"Task {task_id} updated. Stage: {updated_task.stage}, All completed: {all_completed}")
             
-            # Stage deadline configuration (matches default_tasks structure)
-            stage_deadline_config = {
-                'PROPOSAL': [3, 5, 7],
-                'NEGOTIATION': [3, 5, 7],
-            }
-            
             deadlines_updated = False
             if all_completed:
                 now = timezone.now()
                 
-                # Map stage completion to next stage and completion field
-                stage_progression = {
-                    'DISCOVERY': ('PROPOSAL', 'discovery_completed_at'),
-                    'PROPOSAL': ('NEGOTIATION', 'proposal_completed_at'),
-                }
+                # Check if there's a next stage
+                next_stage = OpportunityStages.NEXT_STAGE.get(updated_task.stage)
+                completion_field = OpportunityStages.COMPLETION_FIELD.get(updated_task.stage)
                 
-                if updated_task.stage in stage_progression:
-                    next_stage, completion_field = stage_progression[updated_task.stage]
+                if next_stage and completion_field:
                     
                     # Check if stage hasn't been completed before
                     if not getattr(opportunity, completion_field):
@@ -705,27 +707,32 @@ class OpportunityTaskDetailView(APIView):
                         
                         # Mark stage as completed
                         setattr(opportunity, completion_field, now)
+                        opportunity.stage = next_stage
                         opportunity.save()
                         
-                        # Add deadlines to next stage tasks
+                        # Add deadlines to next stage tasks using configuration
                         next_stage_tasks = OpportunityTask.objects.filter(
                             opportunity=opportunity,
                             stage=next_stage
                         ).order_by('order')
                         
-                        deadline_days = stage_deadline_config.get(next_stage, [])
+                        # Get deadline configuration for next stage
+                        task_configs = DEFAULT_OPPORTUNITY_TASKS.get(next_stage, [])
+                        
                         for idx, task_obj in enumerate(next_stage_tasks):
-                            if idx < len(deadline_days):
-                                task_obj.deadline = now.date() + timedelta(days=deadline_days[idx])
-                                task_obj.save()
-                                logger.info(f"Updated {next_stage} task deadline: {task_obj.name} -> {task_obj.deadline}")
+                            if idx < len(task_configs):
+                                deadline_days = task_configs[idx].get('deadline_days')
+                                if deadline_days is not None:
+                                    task_obj.deadline = now.date() + timedelta(days=deadline_days)
+                                    task_obj.save()
+                                    logger.info(f"Updated {next_stage} task deadline: {task_obj.name} -> {task_obj.deadline}")
                         
                         deadlines_updated = True
             
             return Response({
                 'error': False,
                 'message': 'Task updated successfully',
-                'task': OpportunityTaskSerializer(task).data,
+                'task': OpportunityTaskSerializer(updated_task).data,
                 'stage_advanced': all_completed,
                 'deadlines_updated': deadlines_updated
             }, status=status.HTTP_200_OK)

@@ -9,6 +9,7 @@ from common.base import BaseModel
 from common.utils import CURRENCY_CODES, SOURCES, STAGES
 from contacts.models import Contact
 from teams.models import Teams
+from opportunity.constants import OpportunityStages
 
 
 class Opportunity(BaseModel):
@@ -21,7 +22,7 @@ class Opportunity(BaseModel):
         null=True,
     )
     stage = models.CharField(
-        pgettext_lazy("Stage of Opportunity", "Stage"), max_length=64, choices=STAGES
+        pgettext_lazy("Stage of Opportunity", "Stage"), max_length=64, choices=STAGES, default=OpportunityStages.STAGE_1
     )
     currency = models.CharField(
         max_length=3, choices=CURRENCY_CODES, blank=True, null=True
@@ -105,7 +106,7 @@ class OpportunityTask(BaseModel):
         related_name="tasks",
         on_delete=models.CASCADE
     )
-    stage = models.CharField(max_length=20, choices=STAGE_CHOICES)
+    stage = models.CharField(max_length=20, choices=OpportunityStages.CHOICES)
     name = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
     deadline = models.DateField(null=True, blank=True)
