@@ -1,41 +1,31 @@
-FROM ubuntu:20.04
+FROM python:3.11-slim
 
-# invalidate cache
-ARG APP_NAME
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
-# test arg
-RUN test -n "$APP_NAME"
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    libjpeg62-turbo-dev \
+    zlib1g-dev \
+    libwebp-dev \
+  && rm -rf /var/lib/apt/lists/*
 
-# install system packages
-RUN apt-get update -y
-RUN apt-get install -y \
-  python3-pip \
-  python3-venv \
-  build-essential \
-  libpq-dev \
-  libmariadbclient-dev \
-  libjpeg62-dev \
-  zlib1g-dev \
-  libwebp-dev \
-  curl  \
-  vim \
-  net-tools
+RUN useradd -ms /bin/bash appuser
 
-# setup user
-RUN useradd -ms /bin/bash ubuntu
-USER ubuntu
+WORKDIR /app
 
-# install app
-RUN mkdir -p /home/ubuntu/"$APP_NAME"/"$APP_NAME"
-WORKDIR /home/ubuntu/"$APP_NAME"/"$APP_NAME"
+COPY requirements.txt .
+RUN pip install --no-cache-dir -U pip && \
+    pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir gunicorn
+
 COPY . .
-RUN python3 -m venv ../venv
-RUN . ../venv/bin/activate
-RUN /home/ubuntu/"$APP_NAME"/venv/bin/pip install -U pip
-RUN /home/ubuntu/"$APP_NAME"/venv/bin/pip install -r requirements.txt
-RUN /home/ubuntu/"$APP_NAME"/venv/bin/pip install gunicorn
 
-# setup path
-ENV PATH="${PATH}:/home/ubuntu/$APP_NAME/$APP_NAME/scripts"
+RUN python manage.py collectstatic --noinput || true
 
-USER ubuntu
+USER appuser
+
+EXPOSE 8000
+
+CMD ["gunicorn", "crm.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "4", "--timeout", "120"]

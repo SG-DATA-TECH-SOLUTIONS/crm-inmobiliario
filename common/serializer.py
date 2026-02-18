@@ -46,6 +46,7 @@ class CommentSerializer(serializers.ModelSerializer):
             "invoice",
             "event",
             "profile",
+            "property",
         )
 
 

@@ -20,3 +20,4 @@ Redis==4.6.0
 django-phonenumber-field==7.1.0
 arrow==1.2.3
 phonenumbers==8.13.13
+Pillow==10.2.0

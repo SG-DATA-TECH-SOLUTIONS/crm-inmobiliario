@@ -304,6 +304,13 @@ class Comment(BaseModel):
         related_name="events_comments",
         on_delete=models.CASCADE,
     )
+    property = models.ForeignKey(
+        "properties.Property",
+        blank=True,
+        null=True,
+        related_name="property_comments",
+        on_delete=models.CASCADE,
+    )
 
     class Meta:
         verbose_name = "Comment"
@@ -419,6 +426,13 @@ class Attachments(BaseModel):
         blank=True,
         null=True,
         related_name="events_attachment",
+        on_delete=models.CASCADE,
+    )
+    property = models.ForeignKey(
+        "properties.Property",
+        blank=True,
+        null=True,
+        related_name="property_attachment",
         on_delete=models.CASCADE,
     )
 

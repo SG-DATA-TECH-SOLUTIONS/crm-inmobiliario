@@ -31,10 +31,9 @@ load_dotenv()
 SECRET_KEY = os.environ["SECRET_KEY"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DEBUG", "False").lower() in ("true", "1")
 
-
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
 INSTALLED_APPS = [
     "wagtail.contrib.forms",
@@ -77,6 +76,7 @@ INSTALLED_APPS = [
     "invoices",
     "events",
     "teams",
+    "properties",
 ]
 
 MIDDLEWARE = [
@@ -156,11 +156,20 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/1.10/topics/i18n/
 
 
-TIME_ZONE = "Asia/Kolkata"
+LANGUAGE_CODE = "es"
+TIME_ZONE = "Europe/Madrid"
 
 USE_I18N = True
-
+USE_L10N = True
 USE_TZ = True
+
+LANGUAGES = [
+    ("es", "Español"),
+    ("en", "English"),
+    ("fr", "Français"),
+    ("de", "Deutsch"),
+]
+LOCALE_PATHS = [os.path.join(BASE_DIR, "locale")]
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
@@ -170,8 +179,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 STATIC_URL = "/static/"
 STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
-ENV_TYPE = os.environ["ENV_TYPE"]
-print(">>> ENV_TYPE", ENV_TYPE)
+ENV_TYPE = os.environ.get("ENV_TYPE", "dev")
 if ENV_TYPE == "dev":
     MEDIA_ROOT = os.path.join(BASE_DIR, "media")
     MEDIA_URL = "/media/"
@@ -270,8 +278,8 @@ REST_FRAMEWORK = {
 
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "BottleCRM API",
-    "DESCRIPTION": "Open source CRM application",
+    "TITLE": "Wide City Realty CRM API",
+    "DESCRIPTION": "Real Estate CRM API",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -296,13 +304,21 @@ SWAGGER_SETTINGS = {
 }
 
 CORS_ALLOW_HEADERS = default_headers + ("org",)
-CORS_ORIGIN_ALLOW_ALL = True #JAIME - esto en produccion quitar
-CSRF_TRUSTED_ORIGINS = ["https://*.runcode.io", "http://*"]
+CORS_ORIGIN_ALLOW_ALL = False
+CORS_ALLOWED_ORIGINS = os.environ.get(
+    "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"
+).split(",")
+CSRF_TRUSTED_ORIGINS = os.environ.get(
+    "CSRF_TRUSTED_ORIGINS", "http://localhost:3000,http://localhost:5173"
+).split(",")
 
 SECURE_HSTS_SECONDS = 3600
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
