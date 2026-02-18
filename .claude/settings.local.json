@@ -1,7 +1,14 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(git -C \"c:/Users/htsy4/OneDrive/Desktop/WORK/SOCIALGENCY/Repositorios/CRM-Wide-City-Realty\" submodule status)",
+      "Bash(git -C \"c:/Users/htsy4/OneDrive/Desktop/WORK/SOCIALGENCY/Repositorios/CRM-Wide-City-Realty\" status --short)",
+      "Bash(git -C \"c:/Users/htsy4/OneDrive/Desktop/WORK/SOCIALGENCY/Repositorios/CRM-Wide-City-Realty\" ls-files:*)",
+      "Bash(git -C \"c:/Users/htsy4/OneDrive/Desktop/WORK/SOCIALGENCY/Repositorios/CRM-Wide-City-Realty\" ls-files --cached)",
+      "Bash(dir:*)",
+      "Bash(git -C \"c:/Users/htsy4/OneDrive/Desktop/WORK/SOCIALGENCY/Repositorios/CRM-Wide-City-Realty\" status)",
+      "Bash(git -C:*)"
     ]
   }
 }
